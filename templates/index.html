@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SciWrite AI — Production-Grade Research Paper Generator</title>
+    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap)" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --success-color: #10b981;
+            --sidebar-width: 340px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR PANEL --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .brand-icon {
+            font-size: 2rem;
+        }
+
+        .brand-text h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #ffffff;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 213, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+
+        .radio-label:hover {
+            background-color: var(--bg-main);
+        }
+
+        .radio-input {
+            accent-color: var(--accent-color);
+        }
+
+        .radio-input:checked + span {
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s, transform 0.1s;
+            width: 100%;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+        }
+
+        .metric-card {
+            margin-top: auto;
+            background-color: var(--accent-light);
+            border: 1px solid rgba(37, 99, 213, 0.15);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 2px;
+        }
+
+        .metric-lbl {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* --- MAIN LAYOUT WINDOW --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            padding: 0 32px;
+            gap: 24px;
+        }
+
+        .tab-link {
+            padding: 18px 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .tab-link:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-link.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .tabs-body {
+            flex-grow: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .tab-panel {
+            display: none;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: var(--text-primary);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* --- ARXIV COMPONENT --- */
+        .arxiv-search-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .arxiv-results-box {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* --- RUNTIME MONITORING & DOWNLOAD PANELS --- */
+        .status-box {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .status-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .status-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            max-width: 440px;
+            margin: 0 auto 24px auto;
+            line-height: 1.5;
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--border-color);
+            height: 6px;
+            border-radius: 10px;
+            margin: 0 auto 16px auto;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .step-monitor-list {
+            max-width: 500px;
+            margin: 24px auto 0 auto;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: hidden;
+            display: none;
+        }
+
+        .step-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .step-status {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .step-status.active {
+            color: var(--accent-color);
+        }
+
+        .step-status.done {
+            color: var(--success-color);
+        }
+
+        .download-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 500px;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .preview-area {
+            width: 100%;
+            height: 350px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            padding: 16px;
+            background-color: #0f172a;
+            color: #cbd5e1;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            margin-top: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">🔬</div>
+            <div class="brand-text">
+                <h1>SciWrite AI</h1>
+                <p>Enterprise Paper Framework</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="model_name">Target Language Engine</label>
+            <select id="model_name" class="form-control">
+                <option value="gemini-2.5-flash">gemini-2.5-flash (High Performance/Speed)</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro (Deep Reasoning/Complex Math)</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro (Legacy Stable Architecture)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Target Execution Bounds</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="paper_length" value="Standard (4-5 pages)" checked class="radio-input">
+                    <span>Standard (4–5 Pages Target)</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="paper_length" value="Extended (6-8 pages)" class="radio-input">
+                    <span>Extended (6–8 Pages Target)</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="paper_length" value="Short/Letter (2-3 pages)" class="radio-input">
+                    <span>Short/Letter (2–3 Pages Target)</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="api_key">Gemini Authorization Token</label>
+            <input type="password" id="api_key" class="form-control" placeholder="AIzaSy... (Leave blank if set in ENV)">
+        </div>
+
+        <button id="generate_btn" class="btn btn-primary" style="margin-top: 12px; height: 46px;">
+            Generate Full Academic Paper
+        </button>
+
+        <div class="metric-card">
+            <div class="metric-val" id="total_word_counter">0</div>
+            <div class="metric-lbl">Aggregated Word Envelope</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="tabs-header">
+            <div class="tab-link active" data-target="panel_metadata">1. Document Metadata</div>
+            <div class="tab-link" data-target="panel_context">2. Research Context</div>
+            <div class="tab-link" id="tab_monitor" data-target="panel_monitor">3. Production Stream</div>
+        </div>
+
+        <div class="tabs-body">
+            <div id="panel_metadata" class="tab-panel active">
+                <div class="card">
+                    <div class="card-title">Core Document Footprint</div>
+                    <div class="form-group">
+                        <label for="doc_title">Research Nomenclature Title</label>
+                        <input type="text" id="doc_title" class="form-control" value="A Scalable Deep Learning Framework for Accelerated Discovery of Heterogeneous Catalysts">
+                    </div>
+                    <div class="form-group">
+                        <label for="doc_authors">Principal Investigator Registry (Authors)</label>
+                        <input type="text" id="doc_authors" class="form-control" value="Dr. Eleanor Vance, Prof. Marcus Sterling">
+                    </div>
+                    <div class="form-group">
+                        <label for="doc_affiliations">Institutional Dependencies & Affiliations</label>
+                        <textarea id="doc_affiliations" class="form-control">Department of Chemical Engineering & Materials Science, Institute for Advanced Computational Frameworks, Silicon Valley Research University</textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Executive Summary Component</div>
+                    <div class="form-group">
+                        <label for="doc_abstract">Structured Target Abstract</label>
+                        <textarea id="doc_abstract" class="form-control" style="min-height: 140px;">This study introduces a novel deep learning framework designed to predict the adsorption energies of heterogeneous catalysts with unprecedented speed and precision. By combining graph convolutional networks with multi-head self-attention mechanisms, our architecture models surface interactions at atomic resolutions. Evaluation over a database of 50,000 transition metal configurations indicates a 4x reduction in standard execution times compared to conventional Density Functional Theory (DFT) approaches, maintaining an RMS deviation below 0.05 eV.</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel_context" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">Scientific Parameter Anchors</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="doc_domain">Domain Classification</label>
+                            <select id="doc_domain" class="form-control">
+                                <option value="Machine Learning" selected>Machine Learning</option>
+                                <option value="Quantum Computing">Quantum Computing</option>
+                                <option value="Climate Science">Climate Science</option>
+                                <option value="Bioinformatics">Bioinformatics</option>
+                                <option value="Materials Science">Materials Science</option>
+                                <option value="Financial Economics">Financial Economics</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="lit_keywords">arXiv Harvesting Parameters</label>
+                            <input type="text" id="lit_keywords" class="form-control" value="graph neural networks catalyst adsorption DFT">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <button id="fetch_arxiv_btn" class="btn btn-secondary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;">
+                            Discover Context via ArXiv API
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>ArXiv Context Output Reference Buffer</label>
+                        <div id="arxiv_results" class="arxiv-results-box">No external background references populated. Click discover to execute background retrieval pipelines.</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Granular Methodological Matrix</div>
+                    <div class="form-group">
+                        <label for="context_rq">Primary Research Inquiries / Objectives</label>
+                        <textarea id="context_rq" class="form-control">Can graph-based deep architectures preserve local spatial configuration data across crystalline catalyst matrices to successfully approximate non-local quantum state interactions without requiring direct DFT execution paths?</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="context_method">Architecture Specifications & Execution Methodology</label>
+                        <textarea id="context_method">We utilize a geometric message-passing system augmented with custom residual mappings. Node features correspond to elemental numbers and spatial matrices, while edges represent Euclidean distance values. Optimization leverages AdamW with a step learning rate scheduler over 100 training epochs on a computing cluster of NVIDIA H100 GPUs.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="context_findings">Validated Findings & Metric Output Targets</label>
+                        <textarea id="context_findings">The proposed framework achieves convergence within 12 epochs. Adsorption predictions display high accuracy against ground truth datasets, demonstrating reliable scaling across large structures without requiring architectural changes.</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel_monitor" class="tab-panel">
+                <div class="card">
+                    <div class="status-box">
+                        <div class="status-icon" id="status_indicator_icon">🎛️</div>
+                        <div class="status-title" id="status_indicator_title">System Ready for Generation</div>
+                        <div class="status-desc" id="status_indicator_desc">
+                            Complete metadata configuration details, select your engine parameter constraints, and initialize generation pipelines to monitor construction streams.
+                        </div>
+
+                        <div class="progress-container" id="progress_envelope">
+                            <div class="progress-bar" id="progress_fluid_bar"></div>
+                        </div>
+
+                        <div class="download-actions-grid" id="download_actions_block">
+                            <button id="download_tex_btn" class="btn btn-secondary">Download Raw .TEX Source</button>
+                            <a id="download_zip_btn" class="btn btn-primary" href="#">Download Overleaf .ZIP Bundle</a>
+                        </div>
+
+                        <div class="step-monitor-list" id="step_execution_log">
+                            </div>
+
+                        <textarea id="latex_preview" class="preview-area" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Layout Management Engine
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                
+                link.classList.add('active');
+                document.getElementById(link.getAttribute('data-target')).classList.add('active');
+            });
+        });
+
+        // Global State Architecture Coordinates
+        let compiledSectionsBuffer = {};
+        let targetSectionsRegistry = [];
+        let completedSectionsOrderedList = [];
+        let finalOutputTexContent = "";
+
+        // ArXiv External Interfacing Pipelines
+        document.getElementById('fetch_arxiv_btn').addEventListener('click', async () => {
+            const btn = document.getElementById('fetch_arxiv_btn');
+            const keywords = document.getElementById('lit_keywords').value;
+            const outputBox = document.getElementById('arxiv_results');
+
+            btn.disabled = true;
+            outputBox.innerText = "Querying live arXiv API engines, parsing XML response fields...";
+
+            try {
+                const response = await fetch('/api/fetch-arxiv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keywords: keywords })
+                });
+                const data = await response.json();
+                outputBox.innerText = data.arxiv_context;
+            } catch (err) {
+                outputBox.innerText = `ArXiv interface pipeline reported an execution error: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Pipeline Orchestration Implementation
+        document.getElementById('generate_btn').addEventListener('click', async () => {
+            const generateBtn = document.getElementById('generate_btn');
+            const modelName = document.getElementById('model_name').value;
+            const paperLength = document.querySelector('input[name="paper_length"]:checked').value;
+            const apiKey = document.getElementById('api_key').value;
+
+            // Interface Visibility Lifecycle Resets
+            document.getElementById('tab_monitor').click(); // Force switch view to progress console
+            document.getElementById('status_indicator_icon').innerText = "⏳";
+            document.getElementById('status_indicator_title').innerText = "Processing Document Lifecycle";
+            document.getElementById('status_indicator_desc').innerText = "Calculating structural parameters, section boundaries, and establishing pipeline loops.";
+            
+            document.getElementById('progress_envelope').style.display = "block";
+            document.getElementById('progress_fluid_bar').style.width = "0%";
+            
+            const logBox = document.getElementById('step_execution_log');
+            logBox.innerHTML = "";
+            logBox.style.display = "block";
+
+            document.getElementById('download_actions_block').style.display = "none";
+            document.getElementById('latex_preview').style.display = "none";
+            
+            generateBtn.disabled = true;
+
+            // Extract context envelopes
+            const metadata = {
+                title: document.getElementById('doc_title').value,
+                authors: document.getElementById('doc_authors').value,
+                affiliations: document.getElementById('doc_affiliations').value,
+                abstract: document.getElementById('doc_abstract').value
+            };
+
+            const context = {
+                domain: document.getElementById('doc_domain').value,
+                research_question: document.getElementById('context_rq').value,
+                methodology: document.getElementById('context_method').value,
+                key_findings: document.getElementById('context_findings').value,
+                arxiv_context: document.getElementById('arxiv_results').innerText
+            };
+
+            try {
+                // Step 1: Compute Target Structures
+                const targetRes = await fetch('/api/compute-targets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paper_length: paperLength })
+                });
+                const targetData = await targetRes.json();
+                targetSectionsRegistry = targetData.sections;
+
+                // Build initial UI visibility checklist rows
+                targetSectionsRegistry.forEach(sec => {
+                    const row = document.createElement('div');
+                    row.className = "step-item";
+                    row.id = `step_row_${sec.id}`;
+                    row.innerHTML = `<span>${sec.name} <small style="color:var(--text-muted);">[Target: ~${sec.target} words]</small></span><span class="step-status" id="step_status_${sec.id}">Waiting</span>`;
+                    logBox.appendChild(row);
+                });
+
+                // Step 2: Sequential Core Section Assembly Loop (Maintains Vercel Serverless Function Deadlines)
+                compiledSectionsBuffer = {};
+                completedSectionsOrderedList = [];
+                let aggregatedWordSum = 0;
+
+                for (let i = 0; i < targetSectionsRegistry.length; i++) {
+                    const currentSec = targetSectionsRegistry[i];
+                    
+                    // Highlight Active Operations
+                    document.getElementById(`step_status_${currentSec.id}`).innerText = "Generating...";
+                    document.getElementById(`step_status_${currentSec.id}`).className = "step-status active";
+                    document.getElementById('status_indicator_desc').innerText = `Assembling section segment ${i+1} of ${targetSectionsRegistry.length}: [${currentSec.name}] via direct API pipeline loops.`;
+
+                    const secPayload = {
+                        api_key: apiKey,
+                        model_name: modelName,
+                        section_name: currentSec.name,
+                        target_words: currentSec.target,
+                        metadata: metadata,
+                        context: context,
+                        sections_so_far: compiledSectionsBuffer
+                    };
+
+                    const secResponse = await fetch('/api/generate-section', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(secPayload)
+                    });
+
+                    if (!secResponse.ok) {
+                        const errorData = await secResponse.json();
+                        throw new Error(errorData.error || `Failed during execution framework compilation of ${currentSec.name}`);
+                    }
+
+                    const secData = await secResponse.json();
+                    
+                    // Save section result state
+                    compiledSectionsBuffer[currentSec.name] = secData.content;
+                    completedSectionsOrderedList.push({
+                        name: currentSec.name,
+                        content: secData.content
+                    });
+
+                    // Update metrics counters
+                    aggregatedWordSum += secData.word_count;
+                    document.getElementById('total_word_counter').innerText = aggregatedWordSum.toLocaleString();
+
+                    // Update Individual Row Completion Checkmark States
+                    document.getElementById(`step_status_${currentSec.id}`).innerText = `${secData.word_count} words`;
+                    document.getElementById(`step_status_${currentSec.id}`).className = "step-status done";
+
+                    // Advance fluid line indicator
+                    let pct = Math.round(((i + 1) / targetSectionsRegistry.length) * 85); // Save remaining 15% for aggregation phase
+                    document.getElementById('progress_fluid_bar').style.width = `${pct}%`;
+                }
+
+                // Step 3: Trigger Final Structure Consolidation & Package Serialization Pipelines
+                document.getElementById('status_indicator_desc').innerText = "Consolidating section fragments, generating analytical figures, and compiling bibliography fields.";
+                
+                const finalPayload = {
+                    api_key: apiKey,
+                    model_name: modelName,
+                    metadata: metadata,
+                    sections_ordered: completedSectionsOrderedList
+                };
+
+                const finalResponse = await fetch('/api/finalize-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalPayload)
+                });
+
+                if (!finalResponse.ok) {
+                    throw new Error("Aggregation execution pipeline breakdown encountered.");
+                }
+
+                const finalData = await finalResponse.json();
+                finalOutputTexContent = finalData.latex_source;
+
+                // Sync macro interface counters completely
+                document.getElementById('total_word_counter').innerText = finalData.word_count.toLocaleString();
+                document.getElementById('progress_fluid_bar').style.width = "100%";
+                
+                // Transition interface states to active downloads ready
+                document.getElementById('status_indicator_icon').innerText = "🏆";
+                document.getElementById('status_indicator_title').innerText = "Document Build Successful";
+                document.getElementById('status_indicator_desc').innerText = "The complete academic paper envelope has been compiled, checked against structural parameters, and packaged successfully.";
+
+                // Wire Actions & Blob Conversions
+                setupDownloadActions(finalOutputTexContent, finalData.zip_base64, metadata.title);
+
+                // Show Content Previews
+                const previewEl = document.getElementById('latex_preview');
+                previewEl.value = finalOutputTexContent;
+                previewEl.style.display = "block";
+
+            } catch (error) {
+                document.getElementById('status_indicator_icon').innerText = "❌";
+                document.getElementById('status_indicator_title').innerText = "Pipeline Interruption Encountered";
+                document.getElementById('status_indicator_desc').innerText = `Error: ${error.message}`;
+                document.getElementById('progress_fluid_bar').style.backgroundColor = "#ef4444";
+            } finally {
+                generateBtn.disabled = false;
+            }
+        });
+
+        // Client Side Base64 File Extraction Engine Utility
+        function setupDownloadActions(texSourceCode, zipBase64String, paperTitle) {
+            const cleanName = paperTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 30) || "sciwrite_paper";
+
+            // 1. Text Blob Build for Raw LaTeX Actions
+            const texBlob = new Blob([texSourceCode], { type: 'text/plain;charset=utf-8' });
+            const texBtn = document.getElementById('download_tex_btn');
+            
+            // Re-bind click event handles reliably
+            const newTexBtn = texBtn.cloneNode(true);
+            texBtn.parentNode.replaceChild(newTexBtn, texBtn);
+            newTexBtn.addEventListener('click', () => {
+                const url = URL.createObjectURL(texBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${cleanName}.tex`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // 2. Binary Blob Serialization for Overleaf Archives
+            const byteCharacters = atob(zipBase64String);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const zipBlob = new Blob([byteArray], { type: 'application/zip' });
+            
+            const zipBtn = document.getElementById('download_zip_btn');
+            const zipUrl = URL.createObjectURL(zipBlob);
+            zipBtn.href = zipUrl;
+            zipBtn.download = `${cleanName}_overleaf.zip`;
+
+            // Display Download Control Blocks
+            document.getElementById('download_actions_block').style.display = "grid";
+        }
+    </script>
+</body>
+</html>
